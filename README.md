@@ -33,5 +33,4 @@ SPECIFICATION, ROADMAP), CI, and Alire index publication follow.
 
 ## License
 
-Apache-2.0 (see `LICENSE`). ADRC-in-Ada is a linkable library, so the
-Apache family applies (preferences §18).
+Apache-2.0 (see `LICENSE`).
