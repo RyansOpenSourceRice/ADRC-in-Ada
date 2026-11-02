@@ -1,0 +1,19 @@
+--  SPDX-License-Identifier: Apache-2.0
+--
+--  Examples project: three single-file demo programs over the pure
+--  core. Build with:
+--    alr exec -- gnat make -q -P examples.gpr
+--  The SPARK proof project (proof/spark_core.gpr) never sees this
+--  directory: examples use Ada.Text_IO and are outside the proven core.
+
+with "adrc_ada.gpr";
+
+project Examples is
+   for Source_Dirs use ("examples");
+   for Main use
+     ("example_1_step_tracking.adb",
+      "example_2_disturbance_rejection.adb",
+      "example_3_saturation.adb");
+   for Object_Dir use "obj/examples";
+   for Exec_Dir use "bin/examples";
+end Examples;

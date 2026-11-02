@@ -3,3 +3,22 @@
 
 # Ada Library Information
 *.ali
+
+# GNAT binder artifacts
+b__*.adb
+b__*.ads
+*.bexch
+
+# Alire build and session state (alire.lock is tracked)
+bin/
+obj/
+lib/
+alire/
+config/
+
+# gnatprove output
+gnatprove/
+*.cswi
+*.stderr
+*.stdout
+*.loc

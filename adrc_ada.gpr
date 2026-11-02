@@ -1,0 +1,9 @@
+--  SPDX-License-Identifier: Apache-2.0
+--
+--  Library project: the pure SPARK core lives in src/. The proof project
+--  in proof/ sees only that directory. Examples and tests have their own
+--  projects (examples.gpr, tests/adrc_ada_tests.gpr).
+
+project Adrc_Ada is
+   for Source_Dirs use ("src");
+end Adrc_Ada;

@@ -1,0 +1,9 @@
+--  SPDX-License-Identifier: Apache-2.0
+
+with "adrc_ada.gpr";
+
+project Adrc_Ada_Tests is
+   for Source_Dirs use ("src");
+   for Main use ("adrc_ada_tests.adb");
+   for Exec_Dir use "bin";
+end Adrc_Ada_Tests;

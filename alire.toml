@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: Apache-2.0
+name = "adrc_ada"
+description = "Active Disturbance Rejection Control in SPARK: bounded, pure, OS-free."
+long-description = """# adrc_ada
+
+Active Disturbance Rejection Control (ADRC) written in SPARK.
+
+- Linear ADRC after Han/Gao: tracking differentiator, linear extended
+  state observer, and a disturbance-cancelling state-feedback law.
+- Generic over the real type: instantiate with an IEEE 754 floating
+  point type today, a fixed-point type tomorrow.
+- Pure, OS-free SPARK core: bounded memory, no heap, no I/O, no OS
+  calls. gnatprove proves absence of runtime errors (SPARK Silver) on
+  the core.
+
+The crate is in bootstrap; the full documentation pass (DESIGN,
+SPECIFICATION, ROADMAP) follows the first proof-clean core. See
+PLAN.md for the build order.
+"""
+version = "0.1.0-dev"
+licenses = "Apache-2.0"
+authors = ["Ryan"]
+maintainers = ["Ryan <RyansOpenSourceRice@users.noreply.github.com>"]
+maintainers-logins = ["RyansOpenSourceRice"]
+website = "https://github.com/RyansOpenSourceRice/ADRC-in-Ada"
+tags = ["adrc", "control", "controller", "observer", "feedback", "spark", "verification"]
+
+[build-switches]
+"*".ada_version = "Ada2022"

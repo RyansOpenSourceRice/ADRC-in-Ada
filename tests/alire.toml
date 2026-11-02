@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: Apache-2.0
+name = "adrc_ada_tests"
+description = "Test crate for adrc_ada: unit checks and closed-loop simulation."
+version = "0.1.0-dev"
+licenses = "Apache-2.0"
+authors = ["Ryan"]
+maintainers = ["Ryan <RyansOpenSourceRice@users.noreply.github.com>"]
+maintainers-logins = ["RyansOpenSourceRice"]
+executables = ["adrc_ada_tests"]
+
+[[depends-on]]
+adrc_ada = "*"
+
+[[pins]]
+adrc_ada = { path = ".." }
