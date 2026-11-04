@@ -1,0 +1,71 @@
+# SPDX-License-Identifier: Apache-2.0
+# Host-native GitHub Actions pipeline (preferences.md §9, §29).
+# The pipeline shape is the same across hosts; only the file format and
+# runner differ. Gitleaks, spellcheck, and lint run through the pre-commit
+# suite only — there is no parallel CI/CD-only configuration (§9).
+# The Ada toolchain job (build + proof + tests) lands with this repository's
+# first implementation commit.
+#
+# Actions are referenced by major tag; Renovate (pinDigests: true, §29)
+# converts them to commit-SHA pins.
+
+name: ada
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ada-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-prove-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: alire-project/setup-alire@v4
+        with:
+          version: "2.1.1"
+
+      - name: Build the library
+        run: alr --non-interactive build
+
+      - name: Install gnatprove (pinned FSF build)
+        run: |
+          curl -fsSL -o /tmp/gnatprove.tar.gz \
+            https://github.com/alire-project/GNAT-FSF-builds/releases/download/gnatprove-16.1.0-1/gnatprove-x86_64-linux-16.1.0-1.tar.gz
+          echo "82528bef29857e239373fcc36732837d743f5a00805d502c70455422ffc97191  /tmp/gnatprove.tar.gz" | sha256sum -c -
+          mkdir -p "$HOME/.local/opt"
+          tar -xzf /tmp/gnatprove.tar.gz -C "$HOME/.local/opt"
+          echo "$HOME/.local/opt/gnatprove-x86_64-linux-16.1.0-1/bin" >> "$GITHUB_PATH"
+
+      - name: Prove the SPARK core
+        #  Absence of runtime errors on the whole core (proof/spark_core.gpr
+        #  includes every unit via -U). The CI timeout is higher than the
+        #  local gate (scripts/verify.sh uses 120 s): hosted runners are
+        #  slower hardware, and the same level-3 proof needs more wall clock
+        #  there. Failed checks print to stderr, never to the redirected
+        #  logs; the summary file is the authority, snapshotted per run.
+        run: |
+          mkdir -p proof/obj
+          gnatprove -P proof/spark_core.gpr -U --level=3 --timeout=300 -j2 \
+            > proof/obj/proof.log
+          cp proof/obj/gnatprove/gnatprove.out proof/obj/summary.out
+          if grep "not proved," proof/obj/summary.out; then
+            echo "SPARK: unproved checks remain" >&2
+            exit 1
+          fi
+
+      - name: Build and run the tests
+        run: |
+          cd tests
+          alr --non-interactive build
+          alr --non-interactive run -s

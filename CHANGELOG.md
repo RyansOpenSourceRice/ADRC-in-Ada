@@ -10,6 +10,25 @@ the library versioning convention.
 
 ### Added
 
+- Compliance and presentation pass: standards files (`DESIGN.md`,
+  `SPECIFICATION.md`, `ROADMAP.md`, `MAINTAINERS.md`, `SECURITY.md`,
+  `CONTRIBUTING.md`, `AGENTS.md`, `THIRD_PARTY_NOTICES.md`), the
+  pre-commit gate (gitleaks, cspell, Vale, hygiene hooks, OpenGrep;
+  open-code-review on manual stage), the `ada` CI workflow
+  (build + gnatprove + tests), Renovate configuration, the project
+  ontology with SHACL shapes, issue forms, and the pull-request
+  template.
+- README badges and an updated file map.
+
+### Changed
+
+- README status wording simplified; license section states the license
+  without further framing.
+
+## [2026.11.02]
+
+### Added
+
 - SPARK core, generic over the real type (`ADRC_Ada`, formal
   `Real_Type is digits <>`): tracking differentiator (`ADRC_Ada.TD`),
   third-order linear extended state observer (`ADRC_Ada.LESO`),

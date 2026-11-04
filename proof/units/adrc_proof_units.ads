@@ -3,7 +3,7 @@
 --  Proof-only instantiations of the generic core at a concrete capacity
 --  (IEEE double). Not shipped, not built by the library project; they
 --  exist so gnatprove analyzes the generic units against a real
---  arithmetic instead of leaving them uninstantiated.
+--  arithmetic instead of proving them in the abstract.
 
 with ADRC_Ada.Control;
 with ADRC_Ada.Controller;

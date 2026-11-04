@@ -1,0 +1,402 @@
+# SPDX-License-Identifier: Apache-2.0
+# project.ontology.ttl — per-repo project ontology (preferences.md §36).
+#
+# The AI reads this file directly (file read, no Fuseki required at this size).
+# Semantic version of THIS ontology: 1.0.0 — independent of the repo's CalVer
+# release version (§33). Update it when the ontology's structure changes.
+
+@prefix onto: <https://github.com/RyansOpenSourceRice/ADRC-in-Ada/onto#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://github.com/RyansOpenSourceRice/ADRC-in-Ada/onto#> a owl:Ontology ;
+    dcterms:title "ADRC-in-Ada project ontology" ;
+    owl:versionInfo "1.0.0" ;
+    dcterms:created "2026-09-22"^^xsd:date ;
+    dcterms:modified "2026-09-22"^^xsd:date ;
+    skos:prefLabel "ADRC-in-Ada project ontology" ;
+    skos:definition "Per-repo project ontology for ADRC-in-Ada, following preferences.md §36: 10 core classes, SHACL-validated, tracked working state." .
+
+## ------------------------------------------------------------------
+## SCHEMA LAYER — the 10 core classes (§36). Keep intact when adapting.
+## ------------------------------------------------------------------
+
+onto:Project a owl:Class ;
+    skos:prefLabel "Project" ;
+    skos:definition "The project itself: name, description, audience, and status. Status is a state machine: planning, in-development, beta, stable, maintenance, archived. Read first at cold start to know the project phase." .
+
+onto:Component a owl:Class ;
+    skos:prefLabel "Component" ;
+    skos:definition "A logical component of the project. State: planned, in-progress, complete, blocked. Git tracks files; the ontology tracks logical boundaries and completion state." .
+
+onto:Milestone a owl:Class ;
+    skos:prefLabel "Milestone" ;
+    skos:definition "A project milestone with target date and status. Status: not-started, in-progress, complete, overdue. ROADMAP.md is generated from Milestone nodes; the ontology is canonical." .
+
+onto:Decision a owl:Class ;
+    skos:prefLabel "Decision" ;
+    skos:definition "A design decision: name, rationale, alternatives considered and why rejected, date, status, affected component. Status: active, superseded, retracted. DESIGN.md is generated from Decision nodes; the ontology is canonical." .
+
+onto:LessonLearned a owl:Class ;
+    skos:prefLabel "Lesson Learned" ;
+    skos:definition "A distilled insight from a prior session: when doing X, do Y because Z. Carries the lesson text, brief context, category, and date. Future sessions query this instead of re-reading chat history." .
+
+onto:Workflow a owl:Class ;
+    skos:prefLabel "Workflow" ;
+    skos:definition "A project workflow state machine: workflowType and status, not config (config lives in CI files). Status: not-started, in-progress, complete, failed, blocked. Types include ci, testing, release, dependency-update, security-scan, code-review." .
+
+onto:Person a owl:Class ;
+    skos:prefLabel "Person" ;
+    skos:definition "A person involved in the project: maintainer, contributor, target user. Git tracks commit authors; the ontology tracks roles and relationships." .
+
+onto:Locale a owl:Class ;
+    skos:prefLabel "Locale" ;
+    skos:definition "i18n completion state for a locale: code and status (complete, partial, missing, stale). FTL files store translations; the ontology stores completion state." .
+
+onto:TestSuite a owl:Class ;
+    skos:prefLabel "Test Suite" ;
+    skos:definition "A test suite and its state: name and status (passing, failing, skipped). Git tracks test code; the ontology tracks test state for release readiness queries." .
+
+onto:Blocker a owl:Class ;
+    skos:prefLabel "Blocker" ;
+    skos:definition "Something blocking progress: description, type (bug, dependency, decision, external), what it blocks, and status (active, resolved)." .
+
+## Core properties
+
+onto:name a owl:DatatypeProperty ;
+    skos:prefLabel "name" ;
+    skos:definition "Human-readable name of the resource (project, component, milestone, person, locale, test suite)." ;
+    rdfs:domain owl:Thing ;
+    rdfs:range xsd:string .
+
+onto:description a owl:DatatypeProperty ;
+    skos:prefLabel "description" ;
+    skos:definition "One-paragraph description of the resource." ;
+    rdfs:domain owl:Thing ;
+    rdfs:range xsd:string .
+
+onto:status a owl:DatatypeProperty ;
+    skos:prefLabel "status" ;
+    skos:definition "State of the resource. The allowed vocabulary depends on the class — see each class definition (§36 status machines)." ;
+    rdfs:domain owl:Thing ;
+    rdfs:range xsd:string .
+
+onto:audience a owl:DatatypeProperty ;
+    skos:prefLabel "audience" ;
+    skos:definition "Who the project is for (plain-language summary; marketing.md carries the full context)." ;
+    rdfs:domain onto:Project ;
+    rdfs:range xsd:string .
+
+onto:rationale a owl:DatatypeProperty ;
+    skos:prefLabel "rationale" ;
+    skos:definition "Why a decision was made, in one or two sentences." ;
+    rdfs:domain onto:Decision ;
+    rdfs:range xsd:string .
+
+onto:alternative a owl:DatatypeProperty ;
+    skos:prefLabel "alternative" ;
+    skos:definition "An alternative considered and why it was rejected. One value per alternative." ;
+    rdfs:domain onto:Decision ;
+    rdfs:range xsd:string .
+
+onto:category a owl:DatatypeProperty ;
+    skos:prefLabel "category" ;
+    skos:definition "Category of a lesson (workflow, ontology, tooling, documentation, …)." ;
+    rdfs:domain onto:LessonLearned ;
+    rdfs:range xsd:string .
+
+onto:workflowType a owl:DatatypeProperty ;
+    skos:prefLabel "workflow type" ;
+    skos:definition "The workflow type: ci, testing, release, dependency-update, security-scan, code-review, …" ;
+    rdfs:domain onto:Workflow ;
+    rdfs:range xsd:string .
+
+onto:role a owl:DatatypeProperty ;
+    skos:prefLabel "role" ;
+    skos:definition "The person's role in the project (maintainer, contributor, target user)." ;
+    rdfs:domain onto:Person ;
+    rdfs:range xsd:string .
+
+onto:blockerType a owl:DatatypeProperty ;
+    skos:prefLabel "blocker type" ;
+    skos:definition "What kind of blocker: bug, dependency, decision, external." ;
+    rdfs:domain onto:Blocker ;
+    rdfs:range xsd:string .
+
+onto:blocks a owl:ObjectProperty ;
+    skos:prefLabel "blocks" ;
+    skos:definition "What the blocker blocks: a component, milestone, or workflow." ;
+    rdfs:domain onto:Blocker ;
+    rdfs:range owl:Thing .
+
+onto:affectedComponent a owl:ObjectProperty ;
+    skos:prefLabel "affected component" ;
+    skos:definition "The component a decision or lesson relates to." ;
+    rdfs:domain owl:Thing ;
+    rdfs:range onto:Component .
+
+onto:relatedComponent a owl:ObjectProperty ;
+    skos:prefLabel "related component" ;
+    skos:definition "The component context a lesson was learned in." ;
+    rdfs:domain onto:LessonLearned ;
+    rdfs:range onto:Component .
+
+onto:hasComponent a owl:ObjectProperty ;
+    skos:prefLabel "has component" ;
+    skos:definition "Links a project to one of its components." ;
+    rdfs:domain onto:Project ;
+    rdfs:range onto:Component .
+
+onto:hasMilestone a owl:ObjectProperty ;
+    skos:prefLabel "has milestone" ;
+    skos:definition "Links a project to one of its milestones." ;
+    rdfs:domain onto:Project ;
+    rdfs:range onto:Milestone .
+
+onto:hasDecision a owl:ObjectProperty ;
+    skos:prefLabel "has decision" ;
+    skos:definition "Links a project to one of its design decisions." ;
+    rdfs:domain onto:Project ;
+    rdfs:range onto:Decision .
+
+onto:hasLesson a owl:ObjectProperty ;
+    skos:prefLabel "has lesson" ;
+    skos:definition "Links a project to a lesson learned." ;
+    rdfs:domain onto:Project ;
+    rdfs:range onto:LessonLearned .
+
+onto:hasWorkflow a owl:ObjectProperty ;
+    skos:prefLabel "has workflow" ;
+    skos:definition "Links a project to a tracked workflow." ;
+    rdfs:domain onto:Project ;
+    rdfs:range onto:Workflow .
+
+onto:maintainedBy a owl:ObjectProperty ;
+    skos:prefLabel "maintained by" ;
+    skos:definition "Links a project to the person who maintains it (MAINTAINERS.md backs this up for humans)." ;
+    rdfs:domain onto:Project ;
+    rdfs:range onto:Person .
+
+onto:date a owl:DatatypeProperty ;
+    skos:prefLabel "date" ;
+    skos:definition "Date the decision was made or the lesson was learned (ISO 8601)." ;
+    rdfs:domain owl:Thing ;
+    rdfs:range xsd:date .
+
+onto:lastRunDate a owl:DatatypeProperty ;
+    skos:prefLabel "last run date" ;
+    skos:definition "When the workflow last ran." ;
+    rdfs:domain onto:Workflow ;
+    rdfs:range xsd:date .
+
+## ------------------------------------------------------------------
+## INSTANCE LAYER — ADRC-in-Ada's own working state. Update as work progresses.
+## ------------------------------------------------------------------
+
+## Project
+
+onto:adrc-in-ada a onto:Project ;
+    onto:name "ADRC-in-Ada" ;
+    onto:description "Active Disturbance Rejection Control in SPARK for Ada: tracking differentiator, extended state observer, and disturbance-cancelling law composed as a one-call controller step. Bounded arithmetic, no heap, no I/O, OS-free, generic over the real type." ;
+    onto:audience "Ada and SPARK developers who need disturbance-rejecting control as a linkable, provable library; embedded control engineers who want a fixed-point-capable path." ;
+    onto:status "in-development" ;
+    onto:maintainedBy onto:person-ryan .
+
+onto:person-ryan a onto:Person ;
+    onto:name "Ryan" ;
+    onto:role "maintainer" .
+
+## Components
+
+onto:component-standards-files a onto:Component ;
+    onto:name "Standards files" ;
+    onto:description "CHANGELOG, CONTRIBUTING, MAINTAINERS, ROADMAP, DESIGN, SPECIFICATION, SECURITY, AGENTS, THIRD_PARTY_NOTICES, PLAN, .gitignore." ;
+    onto:status "complete" .
+
+onto:component-precommit-gate a onto:Component ;
+    onto:name "Pre-commit gate" ;
+    onto:description "gitleaks, cspell, Vale, hygiene hooks, OpenGrep, open-code-review (manual stage); single configuration locally and in CI." ;
+    onto:status "complete" .
+
+onto:component-github-workflow a onto:Component ;
+    onto:name "GitHub workflow" ;
+    onto:description "Issue forms, pull-request template, and GitHub Actions pipeline (pre-commit gate, ada build/prove/test job)." ;
+    onto:status "complete" .
+
+onto:component-project-ontology a onto:Component ;
+    onto:name "Project ontology" ;
+    onto:description "project.ontology.ttl with the 10 §36 core classes and validation/shapes.ttl SHACL shapes." ;
+    onto:status "complete" .
+
+onto:component-dependency-updates a onto:Component ;
+    onto:name "Dependency updates" ;
+    onto:description "Single renovate.json: Dependency Dashboard, pinned digests, OSV alerts, grouped and automerged updates." ;
+    onto:status "complete" .
+
+onto:component-core-linear a onto:Component ;
+    onto:name "Linear ADRC core" ;
+    onto:description "Generic SPARK core over the real type: ADRC_Ada constants, ADRC_Ada.Limits contract vocabulary, TD, LESO, Control, Controller with Last_U causality. gnatprove-proven (absence of runtime errors, level 3)." ;
+    onto:status "complete" .
+
+onto:component-tests a onto:Component ;
+    onto:name "Test suite" ;
+    onto:description "tests/ Alire crate: unit checks (saturation, law, config validity, TD convergence, LESO zero-input hold) plus closed-loop double-integrator and damped-plant simulations with golden-value regression." ;
+    onto:status "complete" .
+
+onto:component-examples a onto:Component ;
+    onto:name "Examples" ;
+    onto:description "Three single-file programs: step tracking, disturbance rejection, saturation." ;
+    onto:status "complete" .
+
+onto:component-core-nonlinear a onto:Component ;
+    onto:name "Nonlinear ADRC packages" ;
+    onto:description "Han-style nonlinear variants as sibling packages over the same bounded skeleton: fal power function, fhan tracking differentiator, nonlinear ESO and law." ;
+    onto:status "in-progress" .
+
+## Milestones (ROADMAP.md is generated from these)
+
+onto:milestone-linear-core a onto:Milestone ;
+    onto:name "Linear ADRC core at SPARK Silver" ;
+    onto:description "Bandwidth-parameterized linear ADRC: TD, LESO, law, composed controller; gnatprove proves every check at level 3; unit and closed-loop tests with golden regression." ;
+    onto:status "complete" .
+
+onto:milestone-compliance a onto:Milestone ;
+    onto:name "Compliance and presentation pass" ;
+    onto:description "Standards files, pre-commit gate, ada CI job, Renovate, project ontology with SHACL shapes, issue forms and PR template." ;
+    onto:status "complete" .
+
+onto:milestone-nonlinear a onto:Milestone ;
+    onto:name "Nonlinear ADRC packages" ;
+    onto:description "fal, fhan-based TD, nonlinear ESO and law as siblings of the linear units, proven to the same standard and tested side-by-side against the linear loop." ;
+    onto:status "in-progress" .
+
+onto:milestone-fixed-point a onto:Milestone ;
+    onto:name "Fixed-point instantiation" ;
+    onto:description "Demonstrate instantiating the generic core at a fixed-point real type (no-FPU embedded path) and document what the Real_Type contract requires." ;
+    onto:status "not-started" .
+
+onto:milestone-alire-index a onto:Milestone ;
+    onto:name "Publish to the Alire index" ;
+    onto:description "Submit the crate to the community Alire index once the nonlinear surface is stable." ;
+    onto:status "not-started" .
+
+## Decisions (DESIGN.md is generated from these)
+
+onto:decision-linear-first a onto:Decision ;
+    onto:name "Linear ADRC first, nonlinear staged" ;
+    onto:rationale "The bandwidth-parameterized linear variant (Gao 2003) is the smallest complete ADRC; the bounded-arithmetic proof pattern had to be established on it before nonlinear terms (|e|^alpha, fhan) extend the skeleton." ;
+    onto:alternative "Nonlinear ADRC from day one — rejected: nonlinear proof surface before the skeleton is proven inverts the staging." ;
+    onto:date "2026-11-02"^^xsd:date ;
+    onto:status "active" ;
+    onto:affectedComponent onto:component-core-linear .
+
+onto:decision-generic-real a onto:Decision ;
+    onto:name "Generic core over the real type" ;
+    onto:rationale "Each unit is generic over type Real_Type is digits <> and instantiates the Limits contract vocabulary itself; the non-generic root carries shared constants. This keeps a fixed-point instantiation path open for no-FPU embedded targets." ;
+    onto:alternative "Fixed Float — rejected: locks out the fixed-point direction; re-instantiation is the point of the generic formals." ;
+    onto:date "2026-11-02"^^xsd:date ;
+    onto:status "active" ;
+    onto:affectedComponent onto:component-core-linear .
+
+onto:decision-bounded-arithmetic a onto:Decision ;
+    onto:name "Saturate every intermediate term" ;
+    onto:rationale "SPARK 16 discharges range and float-overflow checks; unbounded product chains stall the prover. Saturating each intermediate into the signal range makes every verification condition interval-trivial, and the bound is far outside the operating band (golden tests pin bit-identical trajectories within it)." ;
+    onto:alternative "Assume statements bounding products — rejected: trust-in-author weakens the assurance story; exact discrete pole placement — deferred: larger constant surface for a first core." ;
+    onto:date "2026-11-02"^^xsd:date ;
+    onto:status "active" ;
+    onto:affectedComponent onto:component-core-linear .
+
+onto:decision-last-u-causality a onto:Decision ;
+    onto:name "Observer consumes the previous control value" ;
+    onto:rationale "The LESO update uses State.Last_U instead of the value being computed now, breaking the algebraic loop between law and observer and matching sampled-controller behavior in front of a zero-order hold." ;
+    onto:alternative "Same-step feedback — rejected: creates an algebraic loop and a non-sequential step semantics." ;
+    onto:date "2026-11-02"^^xsd:date ;
+    onto:status "active" ;
+    onto:affectedComponent onto:component-core-linear .
+
+onto:decision-caller-state a onto:Decision ;
+    onto:name "Caller-owned state records" ;
+    onto:rationale "State lives in records the caller declares and passes; no hidden globals, no heap, no I/O — reentrant by construction and embeddable in a bare-metal task without further work." ;
+    onto:alternative "Module-level state — rejected: not reentrant and unprovable data flow across steps." ;
+    onto:date "2026-11-02"^^xsd:date ;
+    onto:status "active" ;
+    onto:affectedComponent onto:component-core-linear .
+
+onto:decision-apache-license a onto:Decision ;
+    onto:name "Apache-2.0 license" ;
+    onto:rationale "An embeddable control library maximizes downstream adoption under permissive terms; the license grant and notice conventions are recorded in LICENSE." ;
+    onto:alternative "GPL-family licenses — rejected: link-time viral terms are the wrong default for a library meant to be embedded in third-party control applications." ;
+    onto:date "2026-11-02"^^xsd:date ;
+    onto:status "active" .
+
+onto:decision-github-home a onto:Decision ;
+    onto:name "GitHub as the hosting forge" ;
+    onto:rationale "The Ada/SPARK and Alire ecosystems are GitHub-native (crate discovery, CI actions); routing is per-project, not ideological (§26, §27)." ;
+    onto:alternative "GitLab hosting — rejected for this repo: weaker discovery path for the Alire/GNAT audience." ;
+    onto:date "2026-11-02"^^xsd:date ;
+    onto:status "active" .
+
+onto:decision-single-gate a onto:Decision ;
+    onto:name "Pre-commit is the single gate" ;
+    onto:rationale "The checked-in pre-commit config is the only configuration for gitleaks, spellcheck, and linting; CI runs the same suite. Two configs for one tool guarantee drift (§9)." ;
+    onto:alternative "Parallel CI-only Gitleaks/codespell steps — rejected: drift between local and CI gates is a bug by definition." ;
+    onto:date "2026-11-04"^^xsd:date ;
+    onto:status "active" ;
+    onto:affectedComponent onto:component-precommit-gate .
+
+onto:decision-cspell-vale a onto:Decision ;
+    onto:name "cspell + Vale replace Codespell" ;
+    onto:rationale "cspell covers project vocabulary and editor integration; Vale adds the prose-style layer (banned phrasing, heading case, repetitions) that spell-checking alone does not provide." ;
+    onto:alternative "Codespell only — rejected: no project vocabulary, no grammar-style checks. Deviation from §9 documented pending upstream update." ;
+    onto:date "2026-11-04"^^xsd:date ;
+    onto:status "active" ;
+    onto:affectedComponent onto:component-precommit-gate .
+
+onto:decision-no-bundled-skills a onto:Decision ;
+    onto:name "No preferences or pointer skill bundled in project repos" ;
+    onto:rationale "Copying preferences.md into the repo would require the §27 byte-identical sync rule on every upstream update — guaranteed drift. The ontology-access pointer skill is a global asset whose only home is ryans-agentic-coding-preferences; AGENTS.md carries agent orientation for this repository." ;
+    onto:alternative "Shipping the pointer skill per repo — rejected: the skill is global, not project content." ;
+    onto:date "2026-11-04"^^xsd:date ;
+    onto:status "active" .
+
+## Lessons learned
+
+onto:lesson-float-overflow-saturation a onto:LessonLearned ;
+    onto:description "When proving SPARK floating-point arithmetic, saturate every intermediate product into the signal range before combining: unbounded product chains overflow interval bounds and stall the prover, while saturated single operations make each verification condition interval-trivial." ;
+    onto:category "proof" ;
+    onto:date "2026-11-02"^^xsd:date ;
+    onto:relatedComponent onto:component-core-linear .
+
+onto:lesson-generic-child-formals a onto:LessonLearned ;
+    onto:description "Children of a GNAT generic package must declare their own generic formals; formals are not inherited. Route shared contract vocabulary through an instantiated helper child (Limits) rather than relying on parent formals." ;
+    onto:category "language" ;
+    onto:date "2026-11-02"^^xsd:date ;
+    onto:relatedComponent onto:component-core-linear .
+
+onto:lesson-golden-tests-catch-regression a onto:LessonLearned ;
+    onto:description "Keep behavioral refactorings covered by unit and golden-value tests end to end: a cancellation term dropped during a proof-motivated restructuring was caught by the unit suite before commit." ;
+    onto:category "testing" ;
+    onto:date "2026-11-02"^^xsd:date ;
+    onto:relatedComponent onto:component-tests .
+
+onto:lesson-ontology-instance-marker a onto:LessonLearned ;
+    onto:description "Keep the ontology's instance layer under an explicit comment block so updates are a bounded edit, not a rewrite of the schema scaffold." ;
+    onto:category "ontology" ;
+    onto:date "2026-11-04"^^xsd:date ;
+    onto:relatedComponent onto:component-project-ontology .
+
+## Workflows
+
+onto:workflow-ci a onto:Workflow ;
+    onto:workflowType "ci" ;
+    onto:status "in-progress" ;
+    onto:description "GitHub Actions pipeline: pre-commit gate and ada job (alr build, gnatprove proof gate, tests) on main, dev, and pull requests." .
+
+onto:workflow-dependency-update a onto:Workflow ;
+    onto:workflowType "dependency-update" ;
+    onto:status "in-progress" ;
+    onto:description "Renovate runs weekly; Dependency Dashboard is the single view of pending updates." .

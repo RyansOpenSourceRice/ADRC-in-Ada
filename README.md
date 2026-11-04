@@ -1,24 +1,32 @@
 # ADRC-in-Ada
-Active Disturbance Rejection Control (ADRC) in Ada Spark Silver
+
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![ada](https://github.com/RyansOpenSourceRice/ADRC-in-Ada/actions/workflows/ada.yml/badge.svg)](https://github.com/RyansOpenSourceRice/ADRC-in-Ada/actions/workflows/ada.yml)
+[![pre-commit](https://github.com/RyansOpenSourceRice/ADRC-in-Ada/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/RyansOpenSourceRice/ADRC-in-Ada/actions/workflows/pre-commit.yml)
+![SPARK](https://img.shields.io/badge/SPARK-Silver_(gnatprove)-teal)
+
+Active Disturbance Rejection Control (ADRC) in Ada, SPARK Silver
 
 ## Status
 
-Bootstrap, first core landed: linear ADRC after Han (bandwidth
-parameterization per Gao 2003) — tracking differentiator, third-order
-linear extended state observer, and a disturbance-cancelling state
-feedback law — as a pure SPARK core generic over the real type
-(`adrc_ada`), with caller-owned bounded state, no heap, no I/O. The
-build order lives in `PLAN.md`: full docs pass (DESIGN,
-SPECIFICATION, ROADMAP), CI, and Alire index publication follow.
+Linear ADRC core landed and proven: tracking differentiator,
+third-order linear extended state observer, and a disturbance-cancelling
+state feedback law (bandwidth parameterization per Gao 2003) as a pure
+SPARK core generic over the real type (`adrc_ada`), with caller-owned
+bounded state, no heap, no I/O. gnatprove proves absence of runtime
+errors on every core unit (Silver, level 3). Nonlinear variants
+(`fhan`/`fal`) and a fixed-point instantiation follow — see
+`ROADMAP.md` for direction and `DESIGN.md`/`SPECIFICATION.md` for the
+reasoning and contracts.
 
 ## Using the repository
 
 - The crate is built and consumed through [Alire](https://alire.ada.dev/);
   the descriptor is `alire.toml`.
-- Verification gate (build + gnatprove + tests): `scripts/verify.sh`.
+- Verification gate (library + examples build, gnatprove, tests):
+  `scripts/verify.sh`.
 - Examples: `alr exec -- gnat make -q -P examples.gpr`.
-- Contributions follow `CONTRIBUTING.md` (when present); AI agents
-  follow `AGENTS.md` (when present).
+- Contributions follow `CONTRIBUTING.md`; AI agents follow `AGENTS.md`.
 
 ## File map
 
@@ -29,6 +37,11 @@ SPECIFICATION, ROADMAP), CI, and Alire index publication follow.
 | `tests/` | Alire test crate: unit checks + closed-loop simulation |
 | `proof/` | gnatprove project and proof-only instantiations |
 | `scripts/verify.sh` | Local verification gate |
+| `DESIGN.md`, `SPECIFICATION.md` | Design reasoning, contracts and tuning |
+| `ROADMAP.md`, `MAINTAINERS.md` | Direction and scope boundaries |
+| `CONTRIBUTING.md`, `SECURITY.md`, `THIRD_PARTY_NOTICES.md` | Contribution flow, disclosure, notices |
+| `AGENTS.md` | AI behavior guidance for this repository |
+| `project.ontology.ttl`, `validation/` | Project ontology and its SHACL shapes |
 | `PLAN.md`, `CHANGELOG.md` | Build order, change record |
 
 ## License
