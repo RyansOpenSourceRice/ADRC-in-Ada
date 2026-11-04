@@ -14,6 +14,20 @@ The library ships the bandwidth-parameterized linear ADRC (Gao 2003): TD as a se
 
 - *Alternative:* nonlinear ADRC from day one — rejected: the bounded-arithmetic proof pattern had to be established on the simplest variant first; nonlinear terms (`|e|^alpha`, piecewise `fhan`) extend a proven skeleton instead of bootstrapping one.
 
+### Nonlinear siblings over the same skeleton
+
+The nonlinear packages (`Fal`, `NL_TD`, `NL_ESO`, `NL_Control`, `NL_Controller`) reuse the linear units' contract vocabulary verbatim: same `Signal`/state subtypes, same saturate-before-combine discipline, same one-call `Step` shape with `Last_U` causality and caller-owned state. The composed controller instantiates its three sibling units internally at one real type — one arithmetic everywhere, mirroring the linear `Controller`.
+
+`fhan` is proven interval-style rather than saturation-style: its synthesis parameters stay unsaturated (their positivity is what the final division needs), every remaining term stays inside interval bounds by construction, and the output bound `|fhan| <= r` is stated as a postcondition the prover discharges branch by branch.
+
+- *Alternative:* one generic controller with a linear/nonlinear switch — rejected: two sibling controllers keep each surface honest (the configurations differ in shape, not just values) and keep the proof obligations per unit small.
+
+### One trust boundary for fractional powers
+
+`fal` needs real-exponent powers; the elementary exponentiation sits outside the SPARK view, and gnatprove cannot discharge its overflow check by interval reasoning (documented proof limitation). The library moves the exponentiation behind a `SPARK_Mode => Off` wrapper (`Frac_Power`) whose visible contract — input magnitude capped at `Max_Magnitude`, result bounded by `Max_Power = 1e9` — is an assumption at that boundary. Every use site saturates the result before combining. This is the same trust class as the elementary functions themselves; the wrapper keeps it in one place, documented in `SPECIFICATION.md` (proof scope).
+
+- *Alternative:* justify the unproven overflow checks with review annotations — rejected: a stated assumption with an auditable one-line body beats a scattered set of waived checks.
+
 ### Generic over the real type
 
 Every unit is generic over `type Real_Type is digits <>` and instantiates the contract vocabulary package `ADRC_Ada.Limits` internally with that same formal. The root package `ADRC_Ada` is deliberately non-generic: it carries only the documentation and the magnitude/bound constants shared by every instantiation. Consumers instantiate the units at `Long_Float` today, at a fixed-point type later.

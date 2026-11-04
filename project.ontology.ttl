@@ -249,13 +249,13 @@ onto:component-tests a onto:Component ;
 
 onto:component-examples a onto:Component ;
     onto:name "Examples" ;
-    onto:description "Three single-file programs: step tracking, disturbance rejection, saturation." ;
+    onto:description "Four single-file programs: step tracking, disturbance rejection, saturation, nonlinear tracking with a switched disturbance." ;
     onto:status "complete" .
 
 onto:component-core-nonlinear a onto:Component ;
     onto:name "Nonlinear ADRC packages" ;
-    onto:description "Han-style nonlinear variants as sibling packages over the same bounded skeleton: fal power function, fhan tracking differentiator, nonlinear ESO and law." ;
-    onto:status "in-progress" .
+    onto:description "Han-style nonlinear variants as sibling packages over the same bounded skeleton: Fal power function (trusted-numerics boundary for the fractional power), NL_TD fhan differentiator with output bound, NL_ESO and NL_Control fal corrections, composed NL_Controller with Last_U causality. gnatprove-proven (absence of runtime errors, level 3)." ;
+    onto:status "complete" .
 
 ## Milestones (ROADMAP.md is generated from these)
 
@@ -272,7 +272,7 @@ onto:milestone-compliance a onto:Milestone ;
 onto:milestone-nonlinear a onto:Milestone ;
     onto:name "Nonlinear ADRC packages" ;
     onto:description "fal, fhan-based TD, nonlinear ESO and law as siblings of the linear units, proven to the same standard and tested side-by-side against the linear loop." ;
-    onto:status "in-progress" .
+    onto:status "complete" .
 
 onto:milestone-fixed-point a onto:Milestone ;
     onto:name "Fixed-point instantiation" ;
@@ -293,6 +293,22 @@ onto:decision-linear-first a onto:Decision ;
     onto:date "2026-11-02"^^xsd:date ;
     onto:status "active" ;
     onto:affectedComponent onto:component-core-linear .
+
+onto:decision-nonlinear-siblings a onto:Decision ;
+    onto:name "Nonlinear siblings over the same skeleton" ;
+    onto:rationale "Fal, NL_TD, NL_ESO, NL_Control and NL_Controller reuse the linear units' contract vocabulary, saturation discipline, and one-call Step shape; fhan is proven interval-style with the output bound |fhan| <= r stated as a postcondition." ;
+    onto:alternative "One generic controller with a linear/nonlinear switch — rejected: sibling surfaces keep configurations honest and proof obligations small." ;
+    onto:date "2026-11-04"^^xsd:date ;
+    onto:status "active" ;
+    onto:affectedComponent onto:component-core-nonlinear .
+
+onto:decision-trusted-numerics a onto:Decision ;
+    onto:name "One trust boundary for fractional powers" ;
+    onto:rationale "The elementary exponentiation behind fal sits outside the SPARK view and its overflow check is a documented proof limitation; a SPARK_Mode => Off wrapper (Frac_Power) with stated input and result-bound contracts keeps the assumption in one auditable place, and every use site saturates the result." ;
+    onto:alternative "Waiving the overflow checks with review annotations — rejected: a stated assumption with a one-line body beats scattered waived checks." ;
+    onto:date "2026-11-04"^^xsd:date ;
+    onto:status "active" ;
+    onto:affectedComponent onto:component-core-nonlinear .
 
 onto:decision-generic-real a onto:Decision ;
     onto:name "Generic core over the real type" ;
@@ -370,6 +386,12 @@ onto:lesson-float-overflow-saturation a onto:LessonLearned ;
     onto:category "proof" ;
     onto:date "2026-11-02"^^xsd:date ;
     onto:relatedComponent onto:component-core-linear .
+
+onto:lesson-fal-discrete-stability a onto:LessonLearned ;
+    onto:description "Han's continuous-time fal gains do not transfer to coarse sample times: outside the fal width the continuation slope is delta^(alpha-1), so the effective z3 gain is roughly Ts * beta03 * delta^(alpha2-1) and must stay well inside 1. Discrete deployments raise the width or move exponents toward 1 (the test suite documents a stability-feasible cascade at Ts = 0.01); the classical triples remain defaults for fine-sample deployments." ;
+    onto:category "control-design" ;
+    onto:date "2026-11-04"^^xsd:date ;
+    onto:relatedComponent onto:component-core-nonlinear .
 
 onto:lesson-generic-child-formals a onto:LessonLearned ;
     onto:description "Children of a GNAT generic package must declare their own generic formals; formals are not inherited. Route shared contract vocabulary through an instantiated helper child (Limits) rather than relying on parent formals." ;

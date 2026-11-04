@@ -9,15 +9,15 @@ Active Disturbance Rejection Control (ADRC) in Ada, SPARK Silver
 
 ## Status
 
-Linear ADRC core landed and proven: tracking differentiator,
-third-order linear extended state observer, and a disturbance-cancelling
-state feedback law (bandwidth parameterization per Gao 2003) as a pure
+Linear and nonlinear ADRC cores landed and proven: tracking
+differentiator, extended state observer (linear and `fal`-based), and a
+disturbance-cancelling state feedback law (linear bandwidth
+parameterization per Gao 2003; nonlinear synthesis per Han) as a pure
 SPARK core generic over the real type (`adrc_ada`), with caller-owned
 bounded state, no heap, no I/O. gnatprove proves absence of runtime
-errors on every core unit (Silver, level 3). Nonlinear variants
-(`fhan`/`fal`) and a fixed-point instantiation follow — see
-`ROADMAP.md` for direction and `DESIGN.md`/`SPECIFICATION.md` for the
-reasoning and contracts.
+errors on every core unit (Silver, level 3). A fixed-point
+instantiation follows — see `ROADMAP.md` for direction and
+`DESIGN.md`/`SPECIFICATION.md` for the reasoning and contracts.
 
 ## Using the repository
 
@@ -32,8 +32,8 @@ reasoning and contracts.
 
 | Path | Purpose |
 |---|---|
-| `alire.toml`, `adrc_ada.gpr`, `src/` | Alire crate descriptor, GNAT project, SPARK core |
-| `examples/`, `examples.gpr` | Three single-file demo programs |
+| `alire.toml`, `adrc_ada.gpr`, `src/` | Alire crate descriptor, GNAT project, SPARK core (linear and nonlinear units) |
+| `examples/`, `examples.gpr` | Four single-file demo programs |
 | `tests/` | Alire test crate: unit checks + closed-loop simulation |
 | `proof/` | gnatprove project and proof-only instantiations |
 | `scripts/verify.sh` | Local verification gate |

@@ -33,6 +33,11 @@ package ADRC_Ada with SPARK_Mode is
    --  the disturbance-cancellation term.
    Min_Effectiveness : constant := 1.0E-6;
 
+   --  Correction and feedback gain window of the nonlinear units.
+   --  Strictly positive; cubic observer gains reach 1.0e12 at the top
+   --  of the bandwidth window, so the ceiling carries margin.
+   Max_Gain : constant := 1.0E14;
+
    --  Sample-time window (s).
    Min_Sample_Time : constant := 1.0E-5;
    Max_Sample_Time : constant := 1.0E1;

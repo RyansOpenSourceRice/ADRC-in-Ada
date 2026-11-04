@@ -8,9 +8,14 @@ ADRC-in-Ada becomes the dependable Ada/SPARK building block for Active Disturban
 
 ## Planned
 
-- **Nonlinear ADRC packages** — Han's `fhan`-based tracking differentiator and `fal`-based observer/law corrections as sibling packages over the same bounded skeleton, proven to the same standard, tested side-by-side against the linear loop.
 - **Fixed-point instantiation** — an example instantiation of the generic core at a fixed-point real type (no-FPU embedded path), demonstrating what the `Real_Type` contract requires of such a type.
-- **Alire index publication** — submit the crate to the community index once the nonlinear surface is stable.
+- **Alire index publication** — submit the crate to the community index once the fixed-point path is demonstrated.
+
+## Shipped
+
+- **Linear ADRC core at SPARK Silver** — TD, LESO, law, composed controller, proven and golden-regressed (2026.11.02).
+- **Compliance and presentation pass** — standards files, pre-commit gate, CI, ontology with shapes (2026.11.02).
+- **Nonlinear ADRC packages** — Han's `fhan`-based tracking differentiator and `fal`-based observer/law corrections as sibling packages over the same bounded skeleton, proven to the same standard, tested side-by-side against the linear loop (2026.11.04).
 
 ## Explicitly not building
 

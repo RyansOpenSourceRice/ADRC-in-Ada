@@ -10,6 +10,17 @@ the library versioning convention.
 
 ### Added
 
+- Nonlinear ADRC packages over the same bounded skeleton, proven to the
+  same standard (gnatprove level 3, all checks): `ADRC_Ada.Fal` (Han's
+  power function with the linear continuation), `ADRC_Ada.NL_TD`
+  (`fhan`-based tracking differentiator with output bound `|fhan| <= r`),
+  `ADRC_Ada.NL_ESO` (`fal`-corrected extended state observer),
+  `ADRC_Ada.NL_Control` (nonlinear state error feedback law), and the
+  composed `ADRC_Ada.NL_Controller` with `Last_U` causality.
+- Example 4, nonlinear tracking with a switched-on output disturbance;
+  nonlinear test sections: `fal` unit checks (power law, continuity,
+  symmetry), `fhan` bound checks, nonlinear closed-loop convergence and
+  disturbance rejection, and a nonlinear golden regression.
 - Compliance and presentation pass: standards files (`DESIGN.md`,
   `SPECIFICATION.md`, `ROADMAP.md`, `MAINTAINERS.md`, `SECURITY.md`,
   `CONTRIBUTING.md`, `AGENTS.md`, `THIRD_PARTY_NOTICES.md`), the
