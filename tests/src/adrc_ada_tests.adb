@@ -12,6 +12,9 @@
 --       verified run (printed as golden candidates each run).
 --    4. Nonlinear units: fal power law, fhan synthesis bound, and the
 --       nonlinear (fal-based) controller on the same plant family.
+--    5. Fixed-point units: the linear family instantiated at two
+--       fixed-point types (32-bit Q20_11, 64-bit Q31_32), controller
+--       and plant simulated entirely in the fixed type.
 --
 --  Exit status 0 = all checks passed.
 
@@ -21,6 +24,7 @@ with ADRC_Ada;
 with ADRC_Ada.Controller;
 with ADRC_Ada.Control;
 with ADRC_Ada.Fal;
+with ADRC_Ada.Fixed_Controller;
 with ADRC_Ada.LESO;
 with ADRC_Ada.NL_Controller;
 with ADRC_Ada.NL_TD;
@@ -51,6 +55,67 @@ procedure Adrc_Ada_Tests is
    package F_Unit is new ADRC_Ada.Fal (Long_Float);
    package NTD is new ADRC_Ada.NL_TD (Long_Float);
    package FIO is new Ada.Text_IO.Float_IO (Long_Float);
+
+   --  Fixed-point types for the no-float instantiation path. Q20_11 is
+   --  the coarsest 32-bit power-of-two grid that holds the library's
+   --  +/- 1.0e6 signal bound (a 32-bit Q16.16 span of +/- 32768 does
+   --  not); Q31_32 is the fine-resolution 64-bit grid.
+   type Q20_11 is delta 2.0**(-11) range -1048576.0 .. 1048575.99951171875
+     with Size => 32;
+   type Q31_32 is delta 2.0**(-32)
+     range -2147483648.0 .. 2147483647.99999999976716935634613037109375
+     with Size => 64;
+
+   package FX_11 is new ADRC_Ada.Fixed_Controller (Q20_11);
+   package FX_32 is new ADRC_Ada.Fixed_Controller (Q31_32);
+
+   --  Same loop scenario as the linear sims, controller and plant
+   --  entirely in the fixed type.
+   generic
+      type Fixed_Real is delta <>;
+      with package FxC is new ADRC_Ada.Fixed_Controller (Fixed_Real);
+   procedure Sim_Fixed_Double_Integrator
+     (Cfg      : FxC.Config;
+      Ref      : Fixed_Real;
+      D        : Fixed_Real;
+      Steps    : Natural;
+      Record_Golden : Boolean;
+      Golden   : out Fixed_Real;
+      Final_Y  : out Fixed_Real;
+      Final_Z3 : out Fixed_Real);
+
+   procedure Sim_Fixed_Double_Integrator
+     (Cfg      : FxC.Config;
+      Ref      : Fixed_Real;
+      D        : Fixed_Real;
+      Steps    : Natural;
+      Record_Golden : Boolean;
+      Golden   : out Fixed_Real;
+      Final_Y  : out Fixed_Real;
+      Final_Z3 : out Fixed_Real)
+   is
+      S : FxC.State;
+      U : FxC.Control_Signal := 0.0;
+      Y, V : Fixed_Real := 0.0;
+   begin
+      Golden := 0.0;
+      FxC.Reset (S, Ref);
+      for K in 1 .. Steps loop
+         FxC.Step (Cfg, S, Ref, Y, U);
+         --  Plant: y'' = u + d (effectiveness b = 1), Euler, in the
+         --  same fixed type as the controller.
+         V := Fixed_Real (V + Cfg.Ts * (U + D));
+         Y := Fixed_Real (Y + Cfg.Ts * V);
+         if Record_Golden and then K = 200 then
+            Golden := Y;
+         end if;
+      end loop;
+      Final_Y := Y;
+      Final_Z3 := S.Obs.Z3;
+   end Sim_Fixed_Double_Integrator;
+
+   procedure Sim_FX_11 is new Sim_Fixed_Double_Integrator (Q20_11, FX_11);
+   procedure Sim_FX_32 is new Sim_Fixed_Double_Integrator (Q31_32, FX_32);
 
    --  The reference configuration for the closed-loop sims.
    Base_Cfg : constant Ctrl.Config :=
@@ -101,6 +166,14 @@ procedure Adrc_Ada_Tests is
    --  the linear loop's.
    Golden_NL_Y_2s : Long_Float := 0.0;
    Golden_NL_Y_2s_Ref : constant := 0.989316672;
+
+   --  Golden values of the fixed-point loops (same scenario at the two
+   --  fixed types; both formats compute deterministically, so the
+   --  golden tolerance is tight).
+   Golden_FX11_Y_2s : Q20_11 := 0.0;
+   Golden_FX32_Y_2s : Q31_32 := 0.0;
+   Golden_FX11_Y_2s_Ref : constant := 1.000000000;
+   Golden_FX32_Y_2s_Ref : constant := 0.999879366;
 
    --  Simulate the double-integrator plant y'' = u + d with explicit
    --  Euler, tracking Ref. Returns trajectory checkpoints for the
@@ -175,6 +248,26 @@ procedure Adrc_Ada_Tests is
    Final_Y : Long_Float;
    Final_Z3 : Long_Float;
    Max_Abs_U : Long_Float := 0.0;
+
+   --  Fixed-point loop configuration, mirroring Base_Cfg.
+   FX11_Cfg : constant FX_11.Config :=
+     (TD_Bandwidth => 10.0,
+      Wo           => 20.0,
+      Wc           => 10.0,
+      B0           => 1.0,
+      Ts           => 0.01);
+   FX32_Cfg : constant FX_32.Config :=
+     (TD_Bandwidth => 10.0,
+      Wo           => 20.0,
+      Wc           => 10.0,
+      B0           => 1.0,
+      Ts           => 0.01);
+   FX11_Final_Y : Q20_11;
+   FX11_Final_Z3 : Q20_11;
+   FX32_Final_Y : Q31_32;
+   FX32_Final_Z3 : Q31_32;
+   Scratch_11 : Q20_11;
+   Scratch_32 : Q31_32;
 
 begin
    Ada.Text_IO.Put_Line ("=== adrc_ada test suite (Long_Float) ===");
@@ -360,6 +453,79 @@ begin
           abs (Golden_Y_10s - 1.0) < Golden_Tol);
    Check ("golden regression nl Y(2s)",
           abs (Golden_NL_Y_2s - Golden_NL_Y_2s_Ref) < Golden_Tol);
+
+   --  ---- 10. Fixed-point units: the linear family without a FPU ----
+
+   --  Saturating arithmetic helpers at the coarse grid.
+   Check ("fixed saturating product clamps at the signal bound",
+          Long_Float (FX_11.Lim.S_Mul (1000.0, 1000.0)) = 1.0E6);
+   Check ("fixed reciprocal scales exactly",
+          Long_Float (FX_11.Lim.S_Recip (0.25)) = 4.0);
+   Check ("fixed effectiveness floor rounds onto the grid",
+          Long_Float (FX_11.Lim.Effectiveness'First) = 0.0009765625);
+
+   Check ("fixed valid config accepted", FX_11.Valid_Config (FX11_Cfg));
+   Check ("fixed euler-unstable config rejected",
+          not FX_11.Valid_Config
+            (FX_11.Config'(TD_Bandwidth => 10.0, Wo => 30.0, Wc => 10.0,
+                           B0 => 1.0, Ts => 0.5)));
+
+   --  Fixed loop, no disturbance: controller and plant in Q20_11.
+   Sim_FX_11
+     (FX11_Cfg, Ref => 1.0, D => 0.0, Steps => 3000, Record_Golden => True,
+      Golden => Golden_FX11_Y_2s, Final_Y => FX11_Final_Y,
+      Final_Z3 => FX11_Final_Z3);
+   Ada.Text_IO.Put ("fixed golden candidates: Y11(2s)=");
+   FIO.Put (Long_Float (Golden_FX11_Y_2s), 2, 9, 0);
+   Ada.Text_IO.New_Line;
+   Check ("fixed loop converges to unit step (y -> 1)",
+          abs (Long_Float (FX11_Final_Y) - 1.0) < 5.0E-3);
+   --  On the coarse 32-bit grid the observer's disturbance estimate
+   --  carries a quantization noise floor: the z3 gain (wo^3 = 8000)
+   --  amplifies the output quantum of 2**(-11), giving a measured
+   --  limit-cycle amplitude of a few hundredths. The tolerances below
+   --  reflect that arithmetic, not the tuning.
+   Check ("fixed observer disturbance estimate settles to zero (z3 -> 0)",
+          abs (Long_Float (FX11_Final_Z3)) < 1.0E-1);
+
+   --  Fixed loop, constant disturbance rejected by the observer.
+   Sim_FX_11
+     (FX11_Cfg, Ref => 1.0, D => 5.0, Steps => 3000, Record_Golden => False,
+      Golden => Scratch_11, Final_Y => FX11_Final_Y,
+      Final_Z3 => FX11_Final_Z3);
+   Check ("fixed disturbance rejected: y -> 1 despite d = 5",
+          abs (Long_Float (FX11_Final_Y) - 1.0) < 1.0E-2);
+   Check ("fixed observer estimates the disturbance (z3 -> 5)",
+          abs (Long_Float (FX11_Final_Z3) - 5.0) < 1.0E-1);
+
+   --  Fine-resolution 64-bit fixed loop, same scenarios.
+   Sim_FX_32
+     (FX32_Cfg, Ref => 1.0, D => 0.0, Steps => 3000, Record_Golden => True,
+      Golden => Golden_FX32_Y_2s, Final_Y => FX32_Final_Y,
+      Final_Z3 => FX32_Final_Z3);
+   Ada.Text_IO.Put ("fixed golden candidates: Y32(2s)=");
+   FIO.Put (Long_Float (Golden_FX32_Y_2s), 2, 9, 0);
+   Ada.Text_IO.New_Line;
+   Check ("64-bit fixed loop converges to unit step (y -> 1)",
+          abs (Long_Float (FX32_Final_Y) - 1.0) < 1.0E-3);
+   Check ("64-bit fixed observer disturbance estimate settles to zero",
+          abs (Long_Float (FX32_Final_Z3)) < 1.0E-3);
+
+   Sim_FX_32
+     (FX32_Cfg, Ref => 1.0, D => 5.0, Steps => 3000, Record_Golden => False,
+      Golden => Scratch_32, Final_Y => FX32_Final_Y,
+      Final_Z3 => FX32_Final_Z3);
+   Check ("64-bit fixed disturbance rejected: y -> 1 despite d = 5",
+          abs (Long_Float (FX32_Final_Y) - 1.0) < 1.0E-3);
+   Check ("64-bit fixed observer estimates the disturbance (z3 -> 5)",
+          abs (Long_Float (FX32_Final_Z3) - 5.0) < 5.0E-2);
+
+   Check ("golden regression fixed Y11(2s)",
+          abs (Long_Float (Golden_FX11_Y_2s) - Golden_FX11_Y_2s_Ref)
+            < Golden_Tol);
+   Check ("golden regression fixed Y32(2s)",
+          abs (Long_Float (Golden_FX32_Y_2s) - Golden_FX32_Y_2s_Ref)
+            < Golden_Tol);
 
    --  ----------------------------------------------------------------
 

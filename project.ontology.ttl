@@ -249,12 +249,17 @@ onto:component-tests a onto:Component ;
 
 onto:component-examples a onto:Component ;
     onto:name "Examples" ;
-    onto:description "Four single-file programs: step tracking, disturbance rejection, saturation, nonlinear tracking with a switched disturbance." ;
+    onto:description "Five single-file programs: step tracking, disturbance rejection, saturation, nonlinear tracking with a switched disturbance, fixed-point (Q20_11) disturbance rejection." ;
     onto:status "complete" .
 
 onto:component-core-nonlinear a onto:Component ;
     onto:name "Nonlinear ADRC packages" ;
     onto:description "Han-style nonlinear variants as sibling packages over the same bounded skeleton: Fal power function (trusted-numerics boundary for the fractional power), NL_TD fhan differentiator with output bound, NL_ESO and NL_Control fal corrections, composed NL_Controller with Last_U causality. gnatprove-proven (absence of runtime errors, level 3)." ;
+    onto:status "complete" .
+
+onto:component-core-fixed a onto:Component ;
+    onto:name "Fixed-point linear family" ;
+    onto:description "The linear family as delta <> siblings (Fixed_Limits, Fixed_TD, Fixed_LESO, Fixed_Control, Fixed_Controller): operand-band arithmetic keeping every universal_fixed intermediate inside the 2**Size * Delta bound, result clamping by comparison, reciprocal-only division (S_Recip) with a grid-rounded Min_Effectiveness floor. Reference instantiations Q20_11 (32 bit) and Q31_32 (64 bit) proved with the core." ;
     onto:status "complete" .
 
 ## Milestones (ROADMAP.md is generated from these)
@@ -276,12 +281,12 @@ onto:milestone-nonlinear a onto:Milestone ;
 
 onto:milestone-fixed-point a onto:Milestone ;
     onto:name "Fixed-point instantiation" ;
-    onto:description "Demonstrate instantiating the generic core at a fixed-point real type (no-FPU embedded path) and document what the Real_Type contract requires." ;
-    onto:status "not-started" .
+    onto:description "The linear family as fixed-point siblings with operand-band arithmetic and reciprocal-only division; Q20_11/Q31_32 reference instantiations proved with the whole core; fixed test sections and example 5." ;
+    onto:status "complete" .
 
 onto:milestone-alire-index a onto:Milestone ;
     onto:name "Publish to the Alire index" ;
-    onto:description "Submit the crate to the community Alire index once the nonlinear surface is stable." ;
+    onto:description "Submit the crate to the community Alire index now that the fixed-point path is demonstrated." ;
     onto:status "not-started" .
 
 ## Decisions (DESIGN.md is generated from these)
@@ -325,6 +330,14 @@ onto:decision-bounded-arithmetic a onto:Decision ;
     onto:date "2026-11-02"^^xsd:date ;
     onto:status "active" ;
     onto:affectedComponent onto:component-core-linear .
+
+onto:decision-fixed-band-arithmetic a onto:Decision ;
+    onto:name "Fixed-point operand bands and reciprocal-only division" ;
+    onto:rationale "GNAT bounds the universal_fixed intermediate of every fixed-point binary operation at about 2**Size * Delta real units, computed before any result clamp could run, so full-range operands can trap at runtime. The fixed siblings clamp operands into proven bands (Sum_Band 5e5, Product_Band 1e3) before the operation, clamp results by comparison on the exact intermediate, and replace the one needed quotient with a multiply by S_Recip (b0), whose divisor floor Min_Effectiveness (1e-3) keeps the reciprocal inside the intermediate." ;
+    onto:alternative "Prefilter-then-convert on the raw intermediate — rejected: the intermediate itself overflows at contract extremes (verified by a refutable VC), so the clamp decision would raise Constraint_Error before it could clamp; general S_Div with a delta-floor precondition — rejected: provably trappy for wide dividends; trusting the runtime overflow check — rejected: fires where the floating-point family saturates." ;
+    onto:date "2026-11-04"^^xsd:date ;
+    onto:status "active" ;
+    onto:affectedComponent onto:component-core-fixed .
 
 onto:decision-last-u-causality a onto:Decision ;
     onto:name "Observer consumes the previous control value" ;
@@ -386,6 +399,12 @@ onto:lesson-float-overflow-saturation a onto:LessonLearned ;
     onto:category "proof" ;
     onto:date "2026-11-02"^^xsd:date ;
     onto:relatedComponent onto:component-core-linear .
+
+onto:lesson-universal-fixed-intermediate a onto:LessonLearned ;
+    onto:description "When writing generic fixed-point SPARK arithmetic, treat the universal_fixed intermediate as bounded at 2**Size * Delta real units of the instantiated type and remember it is computed before any clamp: pre-clamp operands into bands (products need the tight band, sums a wider one), compare and convert only after that, and restrict division to divisors whose reciprocal provably fits. Read the generated .smt2 (--debug-save-vcs) to learn the exact bound and rounding encoding per type size; test a suspicious verification condition standalone in cvc5/z3 first — a sat answer means the goal is genuinely refutable and the code must change, while a timeout means the prover needs the facts restructured." ;
+    onto:category "proof" ;
+    onto:date "2026-11-04"^^xsd:date ;
+    onto:relatedComponent onto:component-core-fixed .
 
 onto:lesson-fal-discrete-stability a onto:LessonLearned ;
     onto:description "Han's continuous-time fal gains do not transfer to coarse sample times: outside the fal width the continuation slope is delta^(alpha-1), so the effective z3 gain is roughly Ts * beta03 * delta^(alpha2-1) and must stay well inside 1. Discrete deployments raise the width or move exponents toward 1 (the test suite documents a stability-feasible cascade at Ts = 0.01); the classical triples remain defaults for fine-sample deployments." ;

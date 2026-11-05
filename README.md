@@ -15,9 +15,12 @@ disturbance-cancelling state feedback law (linear bandwidth
 parameterization per Gao 2003; nonlinear synthesis per Han) as a pure
 SPARK core generic over the real type (`adrc_ada`), with caller-owned
 bounded state, no heap, no I/O. gnatprove proves absence of runtime
-errors on every core unit (Silver, level 3). A fixed-point
-instantiation follows — see `ROADMAP.md` for direction and
-`DESIGN.md`/`SPECIFICATION.md` for the reasoning and contracts.
+errors on every core unit (Silver, level 3). The linear family also
+ships as fixed-point siblings (`delta <>` formals) for targets without
+an FPU, with reference instantiations at 32-bit `Q20_11` and 64-bit
+`Q31_32` grids proved side-by-side with the floating-point core; see
+`DESIGN.md` for the operand-band and reciprocal-division discipline.
+`SPECIFICATION.md` carries the contracts; `ROADMAP.md` the direction.
 
 ## Using the repository
 
@@ -33,7 +36,7 @@ instantiation follows — see `ROADMAP.md` for direction and
 | Path | Purpose |
 |---|---|
 | `alire.toml`, `adrc_ada.gpr`, `src/` | Alire crate descriptor, GNAT project, SPARK core (linear and nonlinear units) |
-| `examples/`, `examples.gpr` | Four single-file demo programs |
+| `examples/`, `examples.gpr` | Five single-file demo programs |
 | `tests/` | Alire test crate: unit checks + closed-loop simulation |
 | `proof/` | gnatprove project and proof-only instantiations |
 | `scripts/verify.sh` | Local verification gate |

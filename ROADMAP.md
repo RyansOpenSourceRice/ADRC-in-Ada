@@ -8,14 +8,14 @@ ADRC-in-Ada becomes the dependable Ada/SPARK building block for Active Disturban
 
 ## Planned
 
-- **Fixed-point instantiation** — an example instantiation of the generic core at a fixed-point real type (no-FPU embedded path), demonstrating what the `Real_Type` contract requires of such a type.
-- **Alire index publication** — submit the crate to the community index once the fixed-point path is demonstrated.
+- **Alire index publication** — submit the crate to the community index now that the fixed-point path is demonstrated.
 
 ## Shipped
 
 - **Linear ADRC core at SPARK Silver** — TD, LESO, law, composed controller, proven and golden-regressed (2026.11.02).
 - **Compliance and presentation pass** — standards files, pre-commit gate, CI, ontology with shapes (2026.11.02).
 - **Nonlinear ADRC packages** — Han's `fhan`-based tracking differentiator and `fal`-based observer/law corrections as sibling packages over the same bounded skeleton, proven to the same standard, tested side-by-side against the linear loop (2026.11.04).
+- **Fixed-point instantiation** — the linear family as fixed-point siblings (`delta <>` formals), with the operand-band arithmetic and reciprocal-only division the universal_fixed intermediate requires, reference instantiations at 32-bit `Q20_11` and 64-bit `Q31_32`, proved to the same standard, tested and demonstrated by example 5 (2026.11.04).
 
 ## Explicitly not building
 
@@ -29,5 +29,6 @@ ADRC-in-Ada becomes the dependable Ada/SPARK building block for Active Disturban
 
 ## Recently completed
 
+- **2026.11.04** — fixed-point instantiation: `Fixed_Limits`, `Fixed_TD`, `Fixed_LESO`, `Fixed_Control`, `Fixed_Controller` at `delta <>` formals with operand-band arithmetic and reciprocal-only division; `Q20_11`/`Q31_32` reference instantiations proved with the whole core, fixed test sections with golden regressions, example 5. See `CHANGELOG.md` [Unreleased].
 - **2026.11.04** — compliance pass: standards files (DESIGN, SPECIFICATION, ROADMAP, MAINTAINERS, SECURITY, CONTRIBUTING, AGENTS, THIRD_PARTY_NOTICES), the pre-commit gate (gitleaks, cspell, Vale, hygiene, OpenGrep), the `ada` CI workflow (build + gnatprove + tests), Renovate, project ontology with SHACL shapes, issue forms and PR template. See `CHANGELOG.md` [Unreleased].
 - **2026.11.02** — linear ADRC core: TD, LESO, control law, and the composed controller, generic over the real type, SPARK Silver (gnatprove 184 checks, level 3), unit and closed-loop tests with golden-value regression, three examples, and the `scripts/verify.sh` gate. See `CHANGELOG.md` [2026.11.02].

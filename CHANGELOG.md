@@ -10,6 +10,22 @@ the library versioning convention.
 
 ### Added
 
+- Fixed-point instantiation of the linear family: `ADRC_Ada.Fixed_Limits`,
+  `Fixed_TD`, `Fixed_LESO`, `Fixed_Control`, and `Fixed_Controller` — the
+  linear siblings re-expressed at `type Real_Type is delta <>` for targets
+  without a floating-point unit. The family encodes the fixed-point
+  arithmetic discipline the SPARK core needs: operand bands
+  (`Sum_Band` 5e5, `Product_Band` 1e3) keep every universal_fixed
+  intermediate inside the implementation bound (2^Size * Delta of the
+  instantiated type), results clamp by comparison on the exact
+  intermediate, and division exists only as `S_Recip`, the reciprocal of an
+  effectiveness value floored at `Min_Effectiveness` (1.0e-3, grid-rounded);
+  the control law multiplies by that reciprocal. Reference instantiations
+  at a 32-bit `Q20_11` and a 64-bit `Q31_32` grid are proved together with
+  the floating-point core (gnatprove level 3, all checks), tested
+  side-by-side in the closed-loop suite (49 checks, fixed golden
+  regressions), and demonstrated by example 5 (Q20_11 disturbance
+  rejection).
 - Nonlinear ADRC packages over the same bounded skeleton, proven to the
   same standard (gnatprove level 3, all checks): `ADRC_Ada.Fal` (Han's
   power function with the linear continuation), `ADRC_Ada.NL_TD`

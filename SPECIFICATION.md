@@ -46,7 +46,9 @@ Nonlinear variant (Han's formulation, error `e = y - z1` in the observer):
 | `Euler_Bound` | 0.3 | Upper bound for `Ts * w` for every configured bandwidth |
 | `Max_Gain` | 1.0e14 | Upper bound for the nonlinear observer correction gains |
 
-`ADRC_Ada.Limits` (generic) defines the bounded subtypes (`Signal`, `State_Var`, `Bandwidth`, `Effectiveness`, `Sample_Time`) and `Saturate`, which clamps any real value into the `Signal` range. Every arithmetic unit instantiates `Limits` with its own formal real type.
+`ADRC_Ada.Limits` (generic over `digits <>`) defines the bounded subtypes (`Signal`, `State_Var`, `Bandwidth`, `Effectiveness`, `Sample_Time`) and `Saturate`, which clamps any real value into the `Signal` range. Every arithmetic unit instantiates `Limits` with its own formal real type.
+
+`ADRC_Ada.Fixed_Limits` (generic over `delta <>`) mirrors this vocabulary for fixed-point grids and adds the arithmetic discipline the universal_fixed intermediate requires: operand bands `Sum_Band` (5.0e5) and `Product_Band` (1.0e3) that `S_Mul`/`S_Add`/`S_Sub` clamp operands into before the operation, result clamping by comparison on the exact intermediate, and `S_Recip` — the reciprocal of an effectiveness value floored at the fixed family's own `Min_Effectiveness` (1.0e-3, grid-rounded). Its effectiveness floor is higher than the floating-point family's (1.0e-6): the reciprocal of a smaller divisor would leave the universal intermediate before any clamp could run.
 
 ### Configuration validity
 
@@ -69,6 +71,8 @@ Each `Step` takes a state record (caller-owned), the measured inputs, and `Ts`, 
 
 gnatprove proves absence of runtime errors on every core unit (SPARK Silver, level 3, `proof/spark_core.gpr`): subtype ranges, division safety (`B0 >= Min_Effectiveness`), and every intermediate saturation. One trust boundary is documented and deliberately small: the fractional-power evaluation behind `fal` (and the elementary square root behind `fhan`) run outside the SPARK view; their visible contracts (input range, result bound) are assumptions at that boundary, every use site saturates the result, and the mathematical bounds (error magnitude capped at `Max_Magnitude`, exponent window `0.25 .. 1.5`) keep the underlying arithmetic far inside the real type's float range. Control performance — settling, rejection, noise behavior — is simulation scope, pinned by the golden-value regression tests in `tests/`, not a proof claim.
 
+The fixed-point siblings are proved through their instantiations (gnatprove analyzes generics only via instances): `proof/units/adrc_proof_fixed_units.ads` instantiates the family at a 32-bit `Q20_11` grid and a 64-bit `Q31_32` grid, and those instances carry the same level-3 obligation set as the floating-point units. Instantiating `Fixed_Limits` at another type requires the discipline in the unit header: the type must hold `±Max_Magnitude` on its grid, the operand bands and `Min_Effectiveness` must be grid points (32-bit types need delta `2.0**(-11)` or coarser-fitting resolution), and every operation must stay inside the universal_fixed intermediate — the reference instantiations are the validated examples.
+
 ## Surface area
 
 | Path | Purpose |
@@ -84,6 +88,11 @@ gnatprove proves absence of runtime errors on every core unit (SPARK Silver, lev
 | `src/adrc_ada-nl_eso.{ads,adb}` | Nonlinear extended state observer |
 | `src/adrc_ada-nl_control.{ads,adb}` | Nonlinear state error feedback law |
 | `src/adrc_ada-nl_controller.{ads,adb}` | Composed one-call nonlinear step |
+| `src/adrc_ada-fixed_limits.{ads,adb}` | Fixed-point subtypes, `Saturate`, operand-band arithmetic, `S_Recip` |
+| `src/adrc_ada-fixed_td.{ads,adb}` | Fixed-point tracking differentiator |
+| `src/adrc_ada-fixed_leso.{ads,adb}` | Fixed-point extended state observer |
+| `src/adrc_ada-fixed_control.{ads,adb}` | Fixed-point control law (reciprocal effectiveness) |
+| `src/adrc_ada-fixed_controller.{ads,adb}` | Composed one-call fixed-point step |
 | `examples/` | Single-file demonstration programs |
 | `tests/` | Unit checks and closed-loop simulation regressions |
 | `proof/` | gnatprove project and proof-only instantiations |
