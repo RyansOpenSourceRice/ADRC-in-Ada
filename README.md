@@ -47,6 +47,10 @@ an FPU, with reference instantiations at 32-bit `Q20_11` and 64-bit
 | `project.ontology.ttl`, `validation/` | Project ontology and its SHACL shapes |
 | `PLAN.md`, `CHANGELOG.md` | Build order, change record |
 
+## Notice
+
+This project is independently developed and is not affiliated with, endorsed by, or sponsored by AdaCore or the W3C, and Open Container Initiative projects. Ada and SPARK are trademarks of their respective owners, used descriptively to indicate the implementation language only.
+
 ## License
 
 Apache-2.0 (see `LICENSE`).
