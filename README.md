@@ -1,4 +1,4 @@
-# ADRC-in-Ada
+# ADRC-Control
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![ada](https://github.com/RyansOpenSourceRice/ADRC-in-Ada/actions/workflows/ada.yml/badge.svg)](https://github.com/RyansOpenSourceRice/ADRC-in-Ada/actions/workflows/ada.yml)
